@@ -1,4 +1,4 @@
-// import { useColorModeValue } from "/components/ui/color-mode";
+import useProductStore from "../store/product.js";
 import {
   Box,
   Button,
@@ -6,8 +6,9 @@ import {
   Heading,
   Input,
   VStack,
-} from "@chakra-ui/react";
+} from "@chakra-ui/react"; // you can keep Chakra for layout
 import React, { useState } from "react";
+import { toast, Toaster } from "react-hot-toast"; // ✅ import react-hot-toast
 
 export default function CreatePage() {
   const [newProduct, setNewProduct] = useState({
@@ -15,31 +16,69 @@ export default function CreatePage() {
     price: "",
     image: "",
   });
+
+  const { createProduct } = useProductStore();
+
+  const handleAddProduct = async () => {
+    const { success, message } = await createProduct(newProduct);
+
+    if (success) {
+      toast.success(message || "Product created successfully!");
+      setNewProduct({ name: "", price: "", image: "" });
+    } else {
+      toast.error(message || "Something went wrong!");
+    }
+  };
+
   return (
-    <Container maxW={"container.sm"}>
+    <Container maxW="container.sm">
       <VStack spacing={8}>
-        <Heading as={"h1"} size={"2xl"} textAlign={"center"} mb={8}>
+        <Heading as="h1" size="2xl" textAlign="center" mb={8}>
           Create New Product
         </Heading>
 
-        <Box
-          w={"full"}
-          // bg={useColorModeValue("white", "gray.800")}
-          p={6}
-          rounded={"lg"}
-          shadow={"md"}
-        >
+        <Box w="full" p={6} rounded="lg" shadow="md">
           <VStack spacing={4}>
-            <Input placeholder="Product Name" name="name" />
-            <Input placeholder="Price" name="price" type="number" />
-            <Input placeholder="Image URL" name="image" />
+            <Input
+              placeholder="Product Name"
+              value={newProduct.name}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, name: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Price"
+              type="number"
+              value={newProduct.price}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, price: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Image URL"
+              value={newProduct.image}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, image: e.target.value })
+              }
+            />
 
-            <Button colorScheme="blue" w="full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toast.success("File saved successfully")}
+            >
+              Show Toast
+            </Button>
+
+            <Button colorScheme="blue" w="full" onClick={handleAddProduct}>
               Add Product
             </Button>
           </VStack>
         </Box>
       </VStack>
+
+      {/* ✅ Toast container must be rendered once */}
+      <Toaster position="top-right" reverseOrder={false} />
     </Container>
   );
 }
