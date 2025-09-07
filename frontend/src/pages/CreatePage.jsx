@@ -62,14 +62,6 @@ export default function CreatePage() {
               }
             />
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast.success("File saved successfully")}
-            >
-              Show Toast
-            </Button>
-
             <Button colorScheme="blue" w="full" onClick={handleAddProduct}>
               Add Product
             </Button>
