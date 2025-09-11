@@ -1,9 +1,5 @@
+import { FaEdit, FaTrash } from "react-icons/fa";
 import {
-  // ...other imports
-  Text,
-  //   useDisclosure,
-  //   useToast,
-  VStack,
   Box,
   Button,
   Heading,
@@ -11,22 +7,6 @@ import {
   IconButton,
   Image,
   Input,
-  Icon,
-  useDisclosure,
-  //   useColorModeValue,
-} from "@chakra-ui/react";
-
-import { useColorModeValue } from "./ui/color-mode";
-
-// import { useProductStore } from "../store/product.js";
-// import { useState } from "react";
-
-// ✅ lucide-react icons
-import { Pencil, Trash2 } from "lucide-react";
-import { CiTrash } from "react-icons/ci";
-import useProductStore from "../store/product";
-import toast from "react-hot-toast";
-import {
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -34,38 +14,69 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-} from "@chakra-ui/modal";
+  Text,
+  useColorModeValue,
+  useDisclosure,
+  useToast,
+  VStack,
+} from "@chakra-ui/react";
+import useProductStore from "../store/product";
+import { useState } from "react";
 
 const ProductCard = ({ product }) => {
-  //   const [updatedProduct, setUpdatedProduct] = useState(product);
+  // Ensure product is always defined and has required fields
+  const safeProduct = product || { name: "", price: "", image: "" };
+  const [updatedProduct, setUpdatedProduct] = useState(safeProduct);
 
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
-  const { isOpen, onOpen, onClose } = useDisclosure();
+
   const { deleteProduct, updateProduct } = useProductStore();
-  //   const toast = useToast();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleDeleteProduct = async (pid) => {
     const { success, message } = await deleteProduct(pid);
-
     if (!success) {
-      throw new Error(message || "Something went wrong!");
+      toast({
+        title: "Error",
+        description: message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: message,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     }
-    return message || "Product deleted successfully!";
   };
 
-  //   const handleUpdateProduct = async (pid, updatedProduct) => {
-  //     const { success, message } = await updateProduct(pid, updatedProduct);
-  //     onClose();
-
-  //     toast({
-  //       title: success ? "Success" : "Error",
-  //       description: success ? "Product updated successfully" : message,
-  //       status: success ? "success" : "error",
-  //       duration: 3000,
-  //       isClosable: true,
-  //     });
-  //   };
+  const handleUpdateProduct = async (pid, updatedProduct) => {
+    const { success, message } = await updateProduct(pid, updatedProduct);
+    onClose();
+    if (!success) {
+      toast({
+        title: "Error",
+        description: message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   return (
     <Box
@@ -76,65 +87,89 @@ const ProductCard = ({ product }) => {
       _hover={{ transform: "translateY(-5px)", shadow: "xl" }}
       bg={bg}
     >
-      <Image
-        src={product.image}
-        alt={product.name}
-        h={48}
-        w="full"
-        objectFit="cover"
-      />
+      {safeProduct.image ? (
+        <Image
+          src={safeProduct.image}
+          alt={safeProduct.name || "Product"}
+          h={48}
+          w="full"
+          objectFit="cover"
+        />
+      ) : null}
 
       <Box p={4}>
         <Heading as="h3" size="md" mb={2}>
-          {product.name}
+          {safeProduct.name || "Unnamed Product"}
         </Heading>
 
         <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
-          ${product.price}
+          {safeProduct.price ? `$${safeProduct.price}` : "No price"}
         </Text>
 
         <HStack spacing={2}>
+          <IconButton icon={<FaEdit />} onClick={onOpen} colorScheme="blue" />
           <IconButton
-            onClick={onOpen}
-            colorScheme="blue"
-            aria-label="Edit product"
-          >
-            <Pencil size={18} />
-          </IconButton>
-          <IconButton
+            icon={<FaTrash />}
+            onClick={() =>
+              safeProduct._id && handleDeleteProduct(safeProduct._id)
+            }
             colorScheme="red"
-            aria-label="Delete product"
-            _hover={{ bg: "red.500", color: "white" }}
-            onClick={() => {
-              toast.promise(handleDeleteProduct(product._id), {
-                loading: "Deleting...",
-                success: "Product deleted successfully!",
-                error: "Could not delete product",
-              });
-            }}
-          >
-            <Trash2 size={"18px"} strokeWidth={1.75} />
-          </IconButton>
+            isDisabled={!safeProduct._id}
+          />
         </HStack>
       </Box>
 
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
+
         <ModalContent>
           <ModalHeader>Update Product</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Input placeholder="Product Name" />
-            <Input placeholder="Product Price" />
-            <Input placeholder="Product Image URL" />
+            <VStack spacing={4}>
+              <Input
+                placeholder="Product Name"
+                name="name"
+                value={updatedProduct.name}
+                onChange={(e) =>
+                  setUpdatedProduct({ ...updatedProduct, name: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Price"
+                name="price"
+                type="number"
+                value={updatedProduct.price}
+                onChange={(e) =>
+                  setUpdatedProduct({
+                    ...updatedProduct,
+                    price: e.target.value,
+                  })
+                }
+              />
+              <Input
+                placeholder="Image URL"
+                name="image"
+                value={updatedProduct.image}
+                onChange={(e) =>
+                  setUpdatedProduct({
+                    ...updatedProduct,
+                    image: e.target.value,
+                  })
+                }
+              />
+            </VStack>
           </ModalBody>
 
           <ModalFooter>
             <Button
               colorScheme="blue"
               mr={3}
-              //   onClick={updateProduct}
-              //   onClick={() => handleUpdateProduct(product._id, updatedProduct)}
+              onClick={() =>
+                safeProduct._id &&
+                handleUpdateProduct(safeProduct._id, updatedProduct)
+              }
+              isDisabled={!safeProduct._id}
             >
               Update
             </Button>
@@ -147,5 +182,4 @@ const ProductCard = ({ product }) => {
     </Box>
   );
 };
-
 export default ProductCard;
