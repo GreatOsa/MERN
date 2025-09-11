@@ -17,6 +17,7 @@
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.542.0",
     "next-themes": "^0.4.6",
+    "product-store": "file:..",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",
